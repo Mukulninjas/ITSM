@@ -1,4 +1,4 @@
-import { Button, Form, Input } from 'antd';
+import { Button, Form, Input, message } from 'antd';
 import { Ticket } from '../api/users';
 import Dragger from 'antd/es/upload/Dragger';
 import { InboxOutlined } from '@ant-design/icons';
@@ -6,78 +6,94 @@ import TextEditor from './TextEditor';
 import { useState } from 'react';
 
 const CreateTicket = () => {
-    const [description, setDescription] = useState('');
 
-    const props = {
+    const [form] = Form.useForm();
+    const [description, setDescription] = useState([{ type: 'paragraph', children: [{ text: '' }] }]);
+    const [fileList, setFileList] = useState([]);
+
+    const uploadProps = {
         name: 'file',
         multiple: true,
-        action: '',
-        onChange(info) {
-          const { status } = info.file;
-          if (status !== 'uploading') {
-            console.log(info.file, info.fileList);
-          }
-          if (status === 'done') {
-            message.success(`${info.file.name} file uploaded successfully.`);
-          } else if (status === 'error') {
-            message.error(`${info.file.name} file upload failed.`);
-          }
+        beforeUpload: (file) => {
+            setFileList((prev) => [...prev, file]);
+            return false;
         },
-        onDrop(e) {
-          console.log('Dropped files', e.dataTransfer.files);
+        onRemove: (file) => {
+            setFileList((prev) => prev.filter((item) => item.uid !== file.uid));
         },
-      };
+    };
 
     const onFinish = async (values) => {
         try {
-            const response = await Ticket(values);
-            console.log("Ticket Creation Response : ", response);
+            const formData = new FormData();
+            formData.append('title', values.title);
+            formData.append('description', JSON.stringify(description));
+
+            fileList.forEach((file) => {
+                formData.append('files', file);
+            });
+
+            const response = await Ticket(formData);
+            form.resetFields();
+            setDescription([{ type: 'paragraph', children: [{ text: '' }] }]);
+            message.success(response.message);
         } catch (err) {
+            message.error('Failed to create ticket');
             console.error(err);
         }
     };
 
     return (
-        <>
-            <Form layout="vertical" onFinish={onFinish}>
-                <Form.Item
-                    label="Title"
-                    htmlFor="title"
-                    name="title"
-                    rules={[{ required: true, message: "Please enter the title" }]}
-                >
-                    <Input id="title" type="text" placeholder="Enter your Title" />
-                </Form.Item>
-                <Form.Item
-                    label="Description"
-                    htmlFor="description"
-                    name="description"
-                >
-                    <TextEditor value={description} onChange={setDescription} />
-                </Form.Item>
-                <Dragger {...props} style={{ margin: "10px 0px" }}>
+        <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            initialValues={{ description }}
+        >
+            <Form.Item
+                label="Title"
+                name="title"
+                rules={[{ required: true, message: 'Please enter the title' }]}
+            >
+                <Input placeholder="Enter your Title" />
+            </Form.Item>
+
+            <Form.Item
+                label="Description"
+                name="description"
+                rules={[{ required: true, message: 'Please enter the description' }]}
+            >
+                <TextEditor description={description} setDescription={setDescription} />
+            </Form.Item>
+
+            <Form.Item
+                label="Attachments"
+                valuePropName="fileList"
+            >
+                <Dragger {...uploadProps}>
                     <p className="ant-upload-drag-icon">
                         <InboxOutlined />
                     </p>
                     <p className="ant-upload-text">Click or drag file to this area to upload</p>
                     <p className="ant-upload-hint">
-                        Support for a single or bulk upload. Strictly prohibited from uploading company data or other
-                        banned files.
+                        Support for single or bulk upload. Strictly prohibited from uploading
+                        company data or other banned files.
                     </p>
                 </Dragger>
-                <Form.Item>
-                    <Button
-                        type="primary"
-                        block
-                        htmlType="submit"
-                        style={{ fontSize: "1rem", fontWeight: "600" }}
-                    >
-                        Submit
-                    </Button>
-                </Form.Item>
-            </Form>
-        </>
+            </Form.Item>
+
+            <Form.Item>
+                <Button
+                    type="primary"
+                    block
+                    htmlType="submit"
+                    style={{ fontSize: '1rem', fontWeight: 600 }}
+                >
+                    Submit
+                </Button>
+            </Form.Item>
+        </Form>
     );
-}
+};
 
 export default CreateTicket;

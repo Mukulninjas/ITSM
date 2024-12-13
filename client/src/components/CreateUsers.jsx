@@ -3,6 +3,9 @@ import React from 'react';
 import { CreateUser } from '../api/admin';
 
 const CreateUsers = () => {
+
+    const [form] = Form.useForm();
+
     const roleOptions = [
         { value: 'admin', label: 'Admin' },
         { value: 'it', label: 'IT' },
@@ -11,14 +14,13 @@ const CreateUsers = () => {
 
     const permissionOptions = [
         { value: 'manage_users', label: 'Manage Users' },
-        { value: 'create_tickets', label: 'Create Tickets' },
+        { value: 'create_read_tickets', label: 'Create & Read Tickets' },
     ];
 
     const onFinish = async (values) => {
         try {
-            console.log('Form Submitted:', values);
-            const response = await CreateUser(values);
-            console.log("Create user  Response : ", response);
+            await CreateUser(values);
+            form.resetFields();
             message.success('User created successfully!');
         } catch (error) {
             message.error(error.message || 'Failed to create user!');
@@ -28,6 +30,7 @@ const CreateUsers = () => {
     return (
         <div>
             <Form
+                form={form}
                 name="createUserForm"
                 layout="vertical"
                 onFinish={onFinish}

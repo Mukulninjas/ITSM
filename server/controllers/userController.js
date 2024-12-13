@@ -5,7 +5,7 @@ const { imageUploadQueue } = require("../services/queueService");
 const { logger } = require("../utils/nodeMailerConfig");
 const bcrypt = require("bcrypt");
 
-const uploadImage = async (req, res) => {
+const uploadProfileImage = async (req, res) => {
     try {
         if (!req.file) {
             logger.error("No image file provided while uploading profile image", { error });
@@ -20,7 +20,8 @@ const uploadImage = async (req, res) => {
         logger.info(`Uploading profile image for email: ${req.user.email}`);
         await imageUploadQueue.add('uploadProfileImage', {
             filePath: req.file.path,
-            email: req.user.email
+            email: req.user.email,
+            type: 'userProfile',
         });
 
         return res.status(201).json({ message: 'Image upload start successfully' });
@@ -122,6 +123,16 @@ const createTicket = async (req, res) => {
 
         await newTicket.save();
         await sendCreateTicketEmail(includedMembers, req.user, newTicket);
+        
+        const jobs = req.files.map(({path}) => ({
+            name: 'uploadImage',
+            data: {
+                filePath: path,
+                type: 'ticket',
+                ticketId: newTicket._id,
+            },
+        }));
+        await imageUploadQueue.addBulk(jobs);
 
         res.status(201).json({ message: 'Ticket created successfully', ticket: newTicket });
 
@@ -172,7 +183,7 @@ const postComment = async (req, res) => {
 };
 
 module.exports = {
-    uploadImage,
+    uploadProfileImage,
     removeProfileImage,
     changePassword,
     createTicket,

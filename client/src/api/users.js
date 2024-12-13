@@ -44,3 +44,12 @@ export const FetchTickets = async (values) => {
         throw new Error(error.response.data.message);
     }
 }
+
+export const UploadProfileImage = async (values) => {
+    try {
+        const response = await axiosInstance.post(`/user/uploadprofileimage`, values);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response.data.message);
+    }
+}

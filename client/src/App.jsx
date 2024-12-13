@@ -13,6 +13,7 @@ import CreateTicket from './components/CreateTicket';
 import ListTickets from './components/ListTickets';
 import CreateUsers from './components/CreateUsers.jsx';
 import ListUsers from './components/ListUsers.jsx';
+import Profile from './pages/Profile.jsx';
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -33,10 +34,15 @@ function AppContent() {
       <Route path="/reset-password/:email/:token" element={<ResetPasswordPage />} />
 
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} >
+        <Route path="/profile" element={
+          <ProtectedRoute requiredPermissions={[]}>
+            <Profile/>
+          </ProtectedRoute>
+        } />
         <Route
           path="/create-ticket"
           element={
-            <ProtectedRoute requiredPermissions={['create_tickets']}>
+            <ProtectedRoute requiredPermissions={['create_read_tickets']}>
               <CreateTicket />
             </ProtectedRoute>
           }
@@ -44,7 +50,7 @@ function AppContent() {
         <Route
           path="/list-tickets"
           element={
-            <ProtectedRoute requiredPermissions={['list_tickets']}>
+            <ProtectedRoute requiredPermissions={['create_read_tickets']}>
               <ListTickets />
             </ProtectedRoute>
           }

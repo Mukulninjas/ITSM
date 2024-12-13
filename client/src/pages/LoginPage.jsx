@@ -13,7 +13,6 @@ const LoginPage = () => {
     const onFinish = async (values) => {
         try {
             const response = await LoginUser(values);
-            console.log("Login Response : ", response);
             dispatch(login(response.token));
             navigate("/");
         } catch (error) {
